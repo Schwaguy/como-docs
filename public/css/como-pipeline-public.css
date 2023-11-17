@@ -1,0 +1,5 @@
+/** All of the CSS for your public-facing functionality should be included in this file. */
+.pipeline-chart .progress-contain { background: #e4e4e4; height: 25px; overflow: hidden; }
+.pipeline-chart .progress-contain .progress { background: none; position: relative; overflow: visible; width: 100%; height: 100%; }
+.pipeline-chart .progress-contain .progress .progress-bar { position: relative; height: 100%; width: 0%; -webkit-transition: all ease 1s; -moz-transition: all ease 1s; transition: all ease 1s; }
+.pipeline-chart .progress-contain .progress .progress-bar.expanded { width: 100%; }

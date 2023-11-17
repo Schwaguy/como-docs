@@ -1,0 +1,42 @@
+/** All of the CSS for your dashboard-specific functionality should be included in this file. */
+.comometa-row-title { font-weight: bold; }
+.pipeline-details .como-field-wrap { clear: both; padding-bottom: 1em; display: table; width: 100%; }
+.pipeline-details .comometa-row-title { display: table-cell; font-weight: bold; width: 10%; padding-left: 1em; }
+.pipeline-details .comometa-row-content { display: table-cell; width: 89%; }
+.pipeline-details .comometa-row-content input[type='text'] { width: 100%; }
+.pipeline-details .comometa-row-content .inline, .pipeline-details .comometa-row-content input.inline, .pipeline-details .comometa-row-content input[type='text'].inline, .pipeline-details .comometa-row-content input.inline[type='text'] { display: inline !important; width: auto !important; }
+.pipeline-details .comometa-row-content.upload-field input[type='text'] { width: 75%; }
+.pipeline-details .comometa-row-content label { display: block; line-height: 1.75em; }
+.candidates_page_como-pipeline-help ul li { list-style: disc; margin-left: 1.5em; }
+.show { display: block; }
+.hide { display: none; }
+.wrap-radios { max-height: 175px; overflow-y: scroll; }
+.post-type-candidate .repeater, .candidate_page_como-pipeline-settings .repeater { box-sizing: border-box; margin-bottom: 1em; width: 100%; }
+.post-type-candidate .repeater *, .candidate_page_como-pipeline-settings .repeater * { box-sizing: border-box; }
+.post-type-candidate .repeater .handle, .post-type-candidate .repeater .repeater-content, .candidate_page_como-pipeline-settings .repeater .handle, .candidate_page_como-pipeline-settings .repeater .repeater-content { border: 1px solid #ddd; padding: 0.75em; }
+.post-type-candidate .repeater .repeater-content, .candidate_page_como-pipeline-settings .repeater .repeater-content { border-top: none; }
+.post-type-candidate .repeater .handle, .candidate_page_como-pipeline-settings .repeater .handle { background-color: #fafafa; cursor: move; overflow: auto; position: relative; width: 100%; }
+.post-type-candidate .repeater .btn-edit, .candidate_page_como-pipeline-settings .repeater .btn-edit { background: none; border: none; border-radius: 0; box-shadow: none; cursor: pointer; height: 100%; margin: 0; outline: 0; overflow: hidden; padding: 0; position: absolute; right: 0; top: 0; width: 30px; }
+.post-type-candidate .repeater .toggle-arrow, .candidate_page_como-pipeline-settings .repeater .toggle-arrow { color: #a0a5aa; display: inline-block; font-family: dashicons; font-size: 20px; font-style: normal; font-weight: 400px; height: 20px; line-height: 1; text-align: center; text-decoration: inherit; transition: 0.4s ease; vertical-align: top; -webkit-font-smoothing: antialiased; width: 20px; }
+.post-type-candidate .repeater .toggle-arrow:before, .candidate_page_como-pipeline-settings .repeater .toggle-arrow:before { content: "\f142"; }
+.post-type-candidate .repeater .toggle-arrow.closed:before, .candidate_page_como-pipeline-settings .repeater .toggle-arrow.closed:before { content: "\f140"; }
+.post-type-candidate .repeater .link-remove, .candidate_page_como-pipeline-settings .repeater .link-remove { display: block; text-align: right; padding: 0.75em 1em 0 0.75em; color: #a00; text-decoration: none; }
+.post-type-candidate .repeater .link-remove:hover, .candidate_page_como-pipeline-settings .repeater .link-remove:hover { color: red; text-decoration: underline; }
+.post-type-candidate .repeater #upload-file, .candidate_page_como-pipeline-settings .repeater #upload-file { display: block; text-align: right; }
+.post-type-candidate .repeater-more, .candidate_page_como-pipeline-settings .repeater-more { text-align: right; }
+.progress { display: flex; height: 1rem; overflow: hidden; font-size: 0.75rem; background-color: #e9ecef; border-radius: 0.25rem; }
+.progress-bar { display: flex; flex-direction: column; justify-content: center; color: #fff; text-align: center; white-space: nowrap; background-color: #007bff; transition: width 0.6s ease; }
+@media screen and (max-width: 782px) { input[type=file], input[type=url] { -webkit-appearance: none; padding: 6px 10px; } }
+@media screen and (min-width: 783px) { #normal-sortables .wrap-field, .candidate_page_como-pipeline-settings .wrap-field { display: inline-block; vertical-align: top; text-align: center; }
+  #normal-sortables .wrap-field:not(:last-child), .candidate_page_como-pipeline-settings .wrap-field:not(:last-child) { margin-right: 1%; }
+  #normal-sortables .wrap-field input, #normal-sortables .wrap-field select, .candidate_page_como-pipeline-settings .wrap-field input, .candidate_page_como-pipeline-settings .wrap-field select { width: 100%; max-width: 100%; }
+  #normal-sortables .wrap-field input[type='checkbox'], .candidate_page_como-pipeline-settings .wrap-field input[type='checkbox'] { width: auto; }
+  #normal-sortables .wrap-field .como-field-wrap, .candidate_page_como-pipeline-settings .wrap-field .como-field-wrap { width: 100%; max-width: 100%; display: block; }
+  #normal-sortables .wrap-field .como-field-wrap .comometa-row-content, .candidate_page_como-pipeline-settings .wrap-field .como-field-wrap .comometa-row-content { display: block; width: 100% !important; max-width: 100% !important; }
+  #normal-sortables .wrap-field .como-field-wrap .comometa-row-content input, #normal-sortables .wrap-field .como-field-wrap .comometa-row-content select, .candidate_page_como-pipeline-settings .wrap-field .como-field-wrap .comometa-row-content input, .candidate_page_como-pipeline-settings .wrap-field .como-field-wrap .comometa-row-content select { width: 100%; max-width: 100%; }
+  #normal-sortables .wrap-field .como-field-wrap .comometa-row-content input[type='checkbox'], .candidate_page_como-pipeline-settings .wrap-field .como-field-wrap .comometa-row-content input[type='checkbox'] { width: auto; }
+  #normal-sortables .wrap-field:first-child:nth-last-child(2), #normal-sortables .wrap-field:first-child:nth-last-child(2) ~ p, .candidate_page_como-pipeline-settings .wrap-field:first-child:nth-last-child(2), .candidate_page_como-pipeline-settings .wrap-field:first-child:nth-last-child(2) ~ p { width: 48%; }
+  #normal-sortables .wrap-field:first-child:nth-last-child(3), #normal-sortables .wrap-field:first-child:nth-last-child(3) ~ p, .candidate_page_como-pipeline-settings .wrap-field:first-child:nth-last-child(3), .candidate_page_como-pipeline-settings .wrap-field:first-child:nth-last-child(3) ~ p { width: 32%; }
+  #normal-sortables .wrap-field:first-child:nth-last-child(4), #normal-sortables .wrap-field:first-child:nth-last-child(4) ~ p, .candidate_page_como-pipeline-settings .wrap-field:first-child:nth-last-child(4), .candidate_page_como-pipeline-settings .wrap-field:first-child:nth-last-child(4) ~ p { width: 24%; }
+  #normal-sortables .wrap-field:first-child:nth-last-child(5), #normal-sortables .wrap-field:first-child:nth-last-child(5) ~ p, .candidate_page_como-pipeline-settings .wrap-field:first-child:nth-last-child(5), .candidate_page_como-pipeline-settings .wrap-field:first-child:nth-last-child(5) ~ p { width: 19%; }
+  #normal-sortables .wrap-field:first-child:nth-last-child(6), #normal-sortables .wrap-field:first-child:nth-last-child(6) ~ p, .candidate_page_como-pipeline-settings .wrap-field:first-child:nth-last-child(6), .candidate_page_como-pipeline-settings .wrap-field:first-child:nth-last-child(6) ~ p { width: 15%; } }
