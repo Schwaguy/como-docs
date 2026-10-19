@@ -7,14 +7,11 @@ Stable tag: 5.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Plugin to enable document management
-
 == Description ==
 Plugin to enable document management
-
 == Installation ==
 1. Upload `como-docs.php` to the `/wp-content/plugins/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress
-
 == Changelog ==
 = 1.0 =
 1.0.4 - Added Single Document Template

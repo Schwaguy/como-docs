@@ -1,3 +1,4 @@
+<?php defined('ABSPATH') or die('No Hackers!'); ?>
 <?php
 function comodoc_add_settings_page() {
   add_options_page(

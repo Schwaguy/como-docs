@@ -1,3 +1,4 @@
+<?php defined('ABSPATH') or die('No Hackers!'); ?>
 <article itemtype="http://schema.org/ScholarlyArticle" class="loop-item news-item animated fadeIn">
 	<header>
 		<h2 class="entry-title"><a href="<?=the_permalink()?>"><span class="title" itemprop="name"><?=the_title()?></span></a></h2>

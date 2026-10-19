@@ -1,3 +1,4 @@
+<?php defined('ABSPATH') or die('No Hackers!'); ?>
 <div id="container-comodocs-async" data-paged="<?=$a['per_page']?>" data-loading="<?=$a['text-loading']?>" data-results="<?=$a['text-results']?>" data-list-template="<?=$a['list-template']?>" data-pagination-template="<?=$a['pagination-template']?>" class="sc-ajax-filter">
 	<ul class="nav-filter">
 		<li data-loading="<?=$a['text-loading']?> All" data-results="<?=$a['text-results']?>" class="active"><a href="#" data-filter="all-terms" data-term="all-terms" data-page="1" class="active" aria-selected="true">All</a></li>

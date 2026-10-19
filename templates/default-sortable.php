@@ -1,4 +1,5 @@
- <?php
+<?php defined('ABSPATH') or die('No Hackers!'); ?>
+<?php
 // Default Document Display Template
 // $comodoc_array = (id,image,title,author,publication,event,volume,number,page-start,page-end,date,doi,file,link);
 // [comodocs template=TEMPLATE NAME document-cat=DOCUMENT_CATEGORY orderby=DATE/TITLE/MENU_ORDER order=ASC/DESC]

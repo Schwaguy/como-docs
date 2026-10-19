@@ -1,3 +1,4 @@
+<?php defined('ABSPATH') or die('No Hackers!'); ?>
 <?php
 define('WP_USE_THEMES', false);
 include($_SERVER["DOCUMENT_ROOT"] .'/wp-load.php');

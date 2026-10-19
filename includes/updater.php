@@ -1,22 +1,42 @@
+<?php defined('ABSPATH') or die('No Hackers!'); ?>
 <?php
 /* Load Class. */
-$fxupdater_comodocs_updater = new fxUpdater_comodocs_Updater();
+$fxupdater_comodocs_updater = new fxUpdater_comodocs_Updater('https://comocreative.com', 'plugin', 'como-docs/como-docs.php', '1.2.2', array());
 /**
  * Updater Class
 **/
 class fxUpdater_comodocs_Updater{
+	
+	public $server;
+	public $type;
+	public $id;
+	public $api;
+	public $post;
+	public $config;
+	
 	/**
 	 * Class Constructor
 	 */
-	public function __construct() {
+	public function __construct($server, $type, $id, $api, $post) {
+		
 		/* Updater Config */
+		$config = array(
+			'server'  => $server,
+			'type'    => $type,
+			'id'      => $id,
+			'api'     => $api,
+			'post'    => $post,
+		);
+		$this->config = $config;
+		
+		/*
 		$this->config = array(
 			'server'  => 'https://comocreative.com/',
 			'type'    => 'plugin',
 			'id'      => 'como-docs/como-docs.php',
 			'api'     => '1.2.0',
 			'post'    => array(),
-		);
+		);*/
 		/* Admin Init */
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		/* Fix Install Folder */

@@ -1,3 +1,4 @@
+<?php defined('ABSPATH') or die('No Hackers!'); ?>
 <?php
 // Default Document Display Template
 // $comodoc_array = (id,image,title,author,publication,event,volume,number,page-start,page-end,date,doi,file,link);
