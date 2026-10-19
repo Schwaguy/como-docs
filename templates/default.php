@@ -225,7 +225,7 @@ $note = insertStringText(
 );
 
 if (!is_scalar($note)) {
-    $note = 'Note: This is a select list of our scientific publications.';
+    //$note = 'Note: This is a select list of our scientific publications.';
 }
 
 $comodocDisplay .= '<li class="publication row">'

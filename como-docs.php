@@ -194,6 +194,7 @@ function comodoc_init() {
 	add_action( 'admin_enqueue_scripts', 'comodoc_fileupload_engueue' );
 }
 add_action('admin_init','comodoc_init', 1);
+
 // Loads the image management javascript
 function comodoc_fileupload_engueue() {
 	wp_enqueue_media();
@@ -323,6 +324,7 @@ function comodoc_meta_save( $post_id ) {
 	}
 }
 add_action( 'save_post', 'comodoc_meta_save' );
+
 // Adds the meta box stylesheet when appropriate 
 function comodocs_admin_styles(){
     global $typenow;
@@ -330,21 +332,48 @@ function comodocs_admin_styles(){
         wp_enqueue_style('comodoc_meta_box_styles', plugin_dir_url( __FILE__ ) .'css/admin.min.css');
     }
 }
-// Allow users to show/hide individual Document pages 
+
+// Allow users to show/hide individual Document pages.
 add_action('admin_print_styles', 'comodocs_admin_styles');
-$display = get_option('comodoc_plugin_settings');
 add_action('template_redirect', 'como_redirect_single_doc_post', 100);
+
 function como_redirect_single_doc_post() {
-	if (is_singular('document')) {
-		$display = get_option('comodoc_plugin_settings');
-		//print_r($display);
-		if ($display['publicly-queriable'] === 'no') {
-			$redirect = ((!empty($display['redirect-url'])) ? $display['redirect-url'] : home_url());
-			wp_redirect($redirect, 301);
-			exit;
-		}
+    if (!is_singular('document')) {
+        return;
+    }
+
+    // get_option() may return false when the setting has never been saved.
+    $display = get_option('comodoc_plugin_settings', array());
+    if (!is_array($display)) {
+        $display = array();
+    }
+
+    // Only redirect when the option is explicitly set to "no".
+    if (!isset($display['publicly-queriable']) || $display['publicly-queriable'] !== 'no') {
+        return;
+    }
+
+    $redirect = home_url('/');
+    if (!empty($display['redirect-url']) && is_string($display['redirect-url'])) {
+        $candidate = esc_url_raw($display['redirect-url']);
+        if ($candidate !== '') {
+            $redirect = wp_validate_redirect($candidate, home_url('/'));
+        }
+    }
+
+    wp_safe_redirect($redirect, 301);
+    exit;
+}
+
+/**
+ * Print String into Variable Function.
+ */
+if ( ! function_exists( 'insertStringText' ) ) {
+	function insertStringText( $text, $txtdomain ) {
+		return __( $text, $txtdomain );
 	}
 }
+
 /* ##################### Shortcode to Show Documents ##################### */
 // Usage: [comodocs template=TEMPLATE NAME document-cat=DOCUMENT_CATEGORY orderby=DATE/TITLE/MENU_ORDER order=ASC/DESC]
 class ComoDocs_Shortcode {
