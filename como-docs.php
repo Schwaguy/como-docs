@@ -2,7 +2,7 @@
 /*
 Plugin Name: Como Documents
 Plugin URI: http://www.comocreative.com/
-Version: 1.2.1
+Version: 2.0.0
 Author: Como Creative LLC
 Description: Plugin designed to enable and easy Document Gallery. 
 Shortcode example: [comodocs featured=TRUE/FALSE template=TEMPLATE NAME document-cat=MEMBER_TYPE orderby=DATE/TITLE/MENU_ORDER order=ASC/DESC limit=#]  

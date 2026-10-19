@@ -1,41 +1,163 @@
-<?php defined('ABSPATH') or die('No Hackers!'); ?>
 <?php
+defined('ABSPATH') || exit;
+
 // Default Document Display Template
-// $comodoc_array = (id,image,title,author,publication,event,volume,number,page-start,page-end,date,doi,file,link);
-// [comodocs template=TEMPLATE NAME document-cat=DOCUMENT_CATEGORY orderby=DATE/TITLE/MENU_ORDER order=ASC/DESC]
-$comodocDisplay = '<div class="row justify-content-center"><div class="col-12 col-xs-12 col-sm-12 col-md-12 col-lg-10">';
+// Escape metadata at output and validate URLs before constructing HTML.
+
+$comodocDisplay = '<div class="row justify-content-center">';
+$comodocDisplay .= '<div class="col-12 col-xs-12 col-sm-12 col-md-12 col-lg-10">';
 $comodocDisplay .= '<ul class="publication-list">';
-foreach ($comodoc_array as $doc) {
-	$comodocDisplay .= '<li itemscope itemtype="http://schema.org/ScholarlyArticle" class="publication row">';
-	$comodocDisplay .='<div class="col-12 col-xs-12 col-sm-4 col-md-3 col-lg-3">';
-	$comodocDisplay .= (($doc['date']) ? '<span class="date" itemprop="datePublished">'. $doc['date'] .'</span>' : '') .'<br>';
-	$comodocDisplay .='</div>';
-	$comodocDisplay .='<div class="col-12 col-xs-12 col-sm-8 col-md-9 col-lg-9">';
-	$comodocDisplay .= (($doc['author']) ? '<span class="author" itemprop="author">'. $doc['author'] .'</span>. ' : '');
-	$comodocDisplay .= (($doc['title']) ? '<span class="title" itemprop="name">'. $doc['title'] .'</span>. ' : '');
-	$comodocDisplay .= (($doc['publication']) ? '<span itemscope itemtype="http://schema.org/Periodical"><span class="pubName" itemprop="name">'. $doc['publication'] .'</span></span>. ' : '');
-	$comodocDisplay .= (($doc['event']) ? '<span class="event" itemprop="name">'. $doc['event'] .'</span>. ' : '');
-	if ($doc['volume']) {
-		$comodocDisplay .= '<span itemprop="isPartOf" itemscope itemtype="http://schema.org/PublicationVolume">'; 
-		$comodocDisplay .= (($doc['volume']) ? 'vol. <span class="volume" itemprop="volumeNumber">'. $doc['volume'] .'</span>' : '');
-		$comodocDisplay .= (($doc['number']) ? ' no. <span class="number" itemprop="issueNumber">'. $doc['number'] .'</span>' : '');
-		$comodocDisplay .= ((($doc['volume']) || ($doc['number'])) ? ', ' : '');
-		if ($doc['page-start']) {
-			$comodocDisplay .= (($doc['page-start']) ? 'pp. <span class="pages" itemprop="pageStart">'. $doc['page-start'] .'</span>-' : '');
-			$comodocDisplay .= '<span class="pages" itemprop="pageEnd">'. (($doc['page-end']) ? $doc['page-end'] : $doc['page-start']) .'</span>, ';
-		}
-		$comodocDisplay .= '</span>';	
-	}
-	//$comodocDisplay .= (($doc['date']) ? '<span class="date" itemprop="datePublished">'. $doc['date'] .'</span>.' : '') .'<br>';
-	$comodocDisplay .= (($doc['doi']) ? 'doi: <a itemprop="sameAs" href="http://dx.doi.org/'. $doc['doi'] .'" target="_blank" title="'. $doc['title'] .'">'. $doc['doi'] .'</a><br>' : '');	
-	if ($doc['file']) {
-		$comodocDisplay .= '<br><a class="more-link" href="'. $doc['file'] .'" target="_blank">'. insertStringText('View','publications') .'</a>';
-	} elseif ($doc['link']) {
-		$comodocDisplay .= '<br><a class="more-link" href="'. $doc['link'] .'" target="_blank">'. insertStringText('View','publications') .'</a>';
-	}
-	$comodocDisplay .='</div>';
-	$comodocDisplay .= '</li>';
+
+if (isset($comodoc_array) && is_iterable($comodoc_array)) {
+    foreach ($comodoc_array as $doc) {
+        if (!is_array($doc)) {
+            continue;
+        }
+
+        // Normalize expected fields to safe scalar strings.
+        $fields = array(
+            'date', 'author', 'title', 'publication', 'event',
+            'volume', 'number', 'page-start', 'page-end', 'doi',
+            'file', 'link',
+        );
+
+        foreach ($fields as $field) {
+            $doc[$field] = isset($doc[$field]) && is_scalar($doc[$field])
+                ? trim((string) $doc[$field])
+                : '';
+        }
+
+        $comodocDisplay .= '<li itemscope itemtype="https://schema.org/ScholarlyArticle" class="publication row">';
+
+        $comodocDisplay .= '<div class="col-12 col-xs-12 col-sm-4 col-md-3 col-lg-3">';
+
+        if ($doc['date'] !== '') {
+            $comodocDisplay .= '<span class="date" itemprop="datePublished">'
+                . esc_html($doc['date'])
+                . '</span>';
+        }
+
+        $comodocDisplay .= '<br></div>';
+
+        $comodocDisplay .= '<div class="col-12 col-xs-12 col-sm-8 col-md-9 col-lg-9">';
+
+        if ($doc['author'] !== '') {
+            $comodocDisplay .= '<span class="author" itemprop="author">'
+                . esc_html($doc['author'])
+                . '</span>. ';
+        }
+
+        if ($doc['title'] !== '') {
+            $comodocDisplay .= '<span class="title" itemprop="name">'
+                . esc_html($doc['title'])
+                . '</span>. ';
+        }
+
+        if ($doc['publication'] !== '') {
+            $comodocDisplay .= '<span itemscope itemtype="https://schema.org/Periodical">';
+            $comodocDisplay .= '<span class="pubName" itemprop="name">'
+                . esc_html($doc['publication'])
+                . '</span></span>. ';
+        }
+
+        if ($doc['event'] !== '') {
+            $comodocDisplay .= '<span class="event" itemprop="name">'
+                . esc_html($doc['event'])
+                . '</span>. ';
+        }
+
+        if ($doc['volume'] !== '') {
+            $comodocDisplay .= '<span itemprop="isPartOf" itemscope itemtype="https://schema.org/PublicationVolume">';
+
+            $comodocDisplay .= 'vol. <span class="volume" itemprop="volumeNumber">'
+                . esc_html($doc['volume'])
+                . '</span>';
+
+            if ($doc['number'] !== '') {
+                $comodocDisplay .= ' no. <span class="number" itemprop="issueNumber">'
+                    . esc_html($doc['number'])
+                    . '</span>';
+            }
+
+            $comodocDisplay .= ', ';
+
+            if ($doc['page-start'] !== '') {
+                $comodocDisplay .= 'pp. <span class="pages" itemprop="pageStart">'
+                    . esc_html($doc['page-start'])
+                    . '</span>-';
+
+                $page_end = $doc['page-end'] !== ''
+                    ? $doc['page-end']
+                    : $doc['page-start'];
+
+                $comodocDisplay .= '<span class="pages" itemprop="pageEnd">'
+                    . esc_html($page_end)
+                    . '</span>, ';
+            }
+
+            $comodocDisplay .= '</span>';
+        }
+
+        // Validate DOI before building the resolver URL.
+        $doi = preg_replace(
+            '~^https?://(?:dx\.)?doi\.org/~i',
+            '',
+            $doc['doi']
+        );
+        $doi = preg_replace('~^doi:\s*~i', '', trim($doi));
+
+        $doi_valid = (
+            $doi !== ''
+            && (bool) preg_match(
+                '~^10\.\d{4,9}/[-._;()/:A-Z0-9]+$~i',
+                $doi
+            )
+        );
+
+        if ($doi_valid) {
+            $encoded_doi = implode(
+                '/',
+                array_map('rawurlencode', explode('/', $doi))
+            );
+
+            $doi_url = esc_url('https://doi.org/' . $encoded_doi);
+
+            $comodocDisplay .= 'doi: <a itemprop="sameAs" href="'
+                . $doi_url
+                . '" target="_blank" rel="noopener noreferrer" title="'
+                . esc_attr($doc['title'])
+                . '">'
+                . esc_html($doi)
+                . '</a><br>';
+        }
+
+        // Prefer the document file URL, falling back to the external link.
+        $view_url = '';
+
+        if ($doc['file'] !== '') {
+            $view_url = esc_url($doc['file']);
+        } elseif ($doc['link'] !== '') {
+            $view_url = esc_url($doc['link']);
+        }
+
+        if ($view_url !== '') {
+            $view_text = insertStringText('View', 'publications');
+
+            // Treat translated/custom label output as plain text.
+            if (!is_scalar($view_text)) {
+                $view_text = 'View';
+            }
+
+            $comodocDisplay .= '<br><a class="more-link" href="'
+                . $view_url
+                . '" target="_blank" rel="noopener noreferrer">'
+                . esc_html((string) $view_text)
+                . '</a>';
+        }
+
+        $comodocDisplay .= '</div></li>';
+    }
 }
-$comodocDisplay .= '</ul><!-- /doclist -->'; 	
-$comodocDisplay .= '</div></div>'; 	
-?>
+
+$comodocDisplay .= '</ul><!-- /doclist -->';
+$comodocDisplay .= '</div></div>';
