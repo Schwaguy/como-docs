@@ -1,7 +1,7 @@
 <?php defined('ABSPATH') or die('No Hackers!'); ?>
 <?php
 /* Load Class. */
-$fxupdater_comodocs_updater = new fxUpdater_comodocs_Updater('https://comocreative.com', 'plugin', 'como-docs/como-docs.php', '2.0.0', array());
+$fxupdater_comodocs_updater = new fxUpdater_comodocs_Updater('https://comocreative.com', 'plugin', 'como-docs/como-docs.php', '2.0.1', array());
 /**
  * Updater Class
 **/

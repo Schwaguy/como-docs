@@ -2,7 +2,7 @@
 /*
 Plugin Name: Como Documents
 Plugin URI: http://www.comocreative.com/
-Version: 2.0.0
+Version: 2.0.1
 Author: Como Creative LLC
 Description: Plugin designed to enable and easy Document Gallery. 
 Shortcode example: [comodocs featured=TRUE/FALSE template=TEMPLATE NAME document-cat=MEMBER_TYPE orderby=DATE/TITLE/MENU_ORDER order=ASC/DESC limit=#]  
@@ -51,7 +51,7 @@ function document_cpt() {
 		'label'               => __( 'como_documents', 'text_domain' ),
 		'description'         => __( 'Documents', 'text_domain' ),
 		'labels'              => $labels,
-		'supports'            => array( 'title', 'thumbnail'),
+		'supports'            => array('title','revisions','thumbnail','page-attributes'),
 		'taxonomies'          => array(),
 		'hierarchical'        => true,
 		'public'              => true,
@@ -102,6 +102,9 @@ function add_document_capability() {
 	$roles = array('administrator','editor');
 	foreach ($roles as $role) {
 		$role = get_role($role);
+		if ( ! $role ) {
+			continue;
+		}
 		$role->add_cap('edit_document'); 
 		$role->add_cap('read_document');
 		$role->add_cap('delete_document');
@@ -126,12 +129,17 @@ function comodocs_restrict_manage_posts() {
 		foreach ($filters as $tax_slug) {
 			$tax_obj = get_taxonomy($tax_slug);
 			$tax_name = $tax_obj->labels->name;
-			$terms = get_terms($tax_slug);
-			echo "<select name='$tax_slug' id='$tax_slug' class='postform'>";
-			echo '<option value="">Show All '. $tax_name .'</option>';
-			//foreach ($terms as $term) { echo '<option value='. $term->slug, $_GET[$tax_slug] == $term->slug ? ' selected="selected"' : '','>' . $term->name .' (' . $term->count .')</option>'; }
-			foreach ($terms as $term) { echo '<option value="'. $term->slug .'">' . $term->name .' (' . $term->count .')</option>'; }
-			echo '</select>';
+			$terms = get_terms( array( 'taxonomy' => $tax_slug, 'hide_empty' => false ) );
+			echo '<select name="' . esc_attr( $tax_slug ) . '" id="' . esc_attr( $tax_slug ) . '" class="postform">';
+			echo '<option value="">' . esc_html( 'Show All ' . $tax_name ) . '</option>';
+			if ( ! is_wp_error( $terms ) && is_array( $terms ) ) {
+				$selected_term = isset( $_GET[ $tax_slug ] ) ? sanitize_text_field( wp_unslash( $_GET[ $tax_slug ] ) ) : '';
+				foreach ( $terms as $term ) {
+					$selected = selected( $selected_term, $term->slug, false );
+					echo '<option value="' . esc_attr( $term->slug ) . '" ' . $selected . '>' . esc_html( $term->name . ' (' . $term->count . ')' ) . '</option>';
+				}
+			}
+			echo '</select>'; 
 		}
 	}
 }
@@ -242,6 +250,20 @@ function comodoc_meta_callback( $post ) {
     <p<?=((isset($display['show-doi'])) ? (($display['show-doi'] == 'hide') ? ' style="display: none"' : '') : '')?>><label for="comodoc-doi" class="comometa-row-title"><?php _e( 'DOI', 'como-docs' )?></label>
   	<span class="comometa-row-content"><input type="text" name="comodoc-doi" id="comodoc-doi" value="<?php if ( isset ( $comodoc_stored_meta['comodoc-doi'] ) ) echo $comodoc_stored_meta['comodoc-doi'][0]; ?>" /></span></p>
  
+    <?php
+    $comodoc_embed_pdf = isset($comodoc_stored_meta['comodoc-embed-pdf'][0])
+        && (string) $comodoc_stored_meta['comodoc-embed-pdf'][0] === '1';
+    ?>
+    <p class="comodoc-embed-pdf-setting">
+        <label for="comodoc-embed-pdf" class="comometa-row-title"><?php esc_html_e('Embed PDF', 'como-docs'); ?></label>
+        <span class="comometa-row-content">
+            <label>
+                <input type="checkbox" name="comodoc-embed-pdf" id="comodoc-embed-pdf" value="1" <?php checked($comodoc_embed_pdf); ?> />
+                <?php esc_html_e('Embed this document’s PDF in the single-document page and the default-single-embed template.', 'como-docs'); ?>
+            </label>
+        </span>
+    </p>
+
     <p class="image-upload"<?=((isset($display['show-document'])) ? (($display['show-document'] == 'hide') ? ' style="display: none"' : '') : '')?>>
         <label for="comodoc-file" class="comometa-row-title"><?php _e( 'Document File', 'comostrap-textdomain' )?></label>
         <span class="comometa-row-content upload-field">
@@ -290,44 +312,81 @@ function comodoc_meta_callback( $post ) {
 }
 // Saves the Document Info Section meta input
 function comodoc_meta_save( $post_id ) {
-	
-	// Only do this if our custom flag is present
-    if (isset($_POST['comoupdate_flag'])) {
-	
-		// Checks save status
-		$is_autosave = wp_is_post_autosave( $post_id );
-		$is_revision = wp_is_post_revision( $post_id );
-		$is_valid_nonce = ( isset( $_POST[ 'comodoc_nonce' ] ) && wp_verify_nonce( $_POST[ 'comodoc_nonce' ], basename( __FILE__ ) ) ) ? 'true' : 'false';
-		// Exits script depending on save status
-		if ( $is_autosave || $is_revision || !$is_valid_nonce ) {
-			return;
-		}
-		// Specify Meta Variables to be Updated
-		$metaVars = array('comodoc-author','comodoc-publication','comodoc-event','comodoc-abstract','comodoc-funding','comodoc-volume','comodoc-number','comodoc-page-start','comodoc-page-end','comodoc-date','comodoc-doi','comodoc-file','comodoc-file-id','comodoc-file-2','comodoc-file-id-2','comodoc-link');
-		$checkboxVars = array();
-		// Update Meta Variables
-		foreach ($metaVars as $var) {
-			if (in_array($var,$checkboxVars)) {
-				if (isset($_POST[$var])) {
-					update_post_meta($post_id, $var, 'yes');
-				} else {
-					update_post_meta($post_id, $var, '');
-				}
-			} else {
-				if(isset($_POST[$var])) {
-					update_post_meta($post_id, $var, $_POST[$var]);
-				} else {
-					update_post_meta($post_id, $var, '');
-				}
-			}
-		}
-	}
+    if ( ! isset( $_POST['comoupdate_flag'] ) ) {
+        return;
+    }
+
+    if ( wp_is_post_autosave( $post_id ) || wp_is_post_revision( $post_id ) ) {
+        return;
+    }
+
+    if ( ! isset( $_POST['comodoc_nonce'] ) ||
+         ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['comodoc_nonce'] ) ), basename( __FILE__ ) ) ) {
+        return;
+    }
+
+    if ( ! current_user_can( 'edit_post', $post_id ) ) {
+        return;
+    }
+
+    $meta_types = array(
+        'comodoc-author'       => 'text',
+        'comodoc-publication'  => 'text',
+        'comodoc-event'        => 'text',
+        'comodoc-abstract'     => 'textarea',
+        'comodoc-funding'      => 'text',
+        'comodoc-volume'       => 'text',
+        'comodoc-number'       => 'text',
+        'comodoc-page-start'   => 'text',
+        'comodoc-page-end'     => 'text',
+        'comodoc-date'         => 'text',
+        'comodoc-doi'          => 'text',
+        'comodoc-file'         => 'url',
+        'comodoc-file-id'      => 'int',
+        'comodoc-file-2'       => 'url',
+        'comodoc-file-id-2'    => 'int',
+        'comodoc-link'         => 'url',
+        'comodoc-embed-pdf'    => 'checkbox',
+    );
+
+    foreach ( $meta_types as $key => $type ) {
+        if ( ! isset( $_POST[ $key ] ) ) {
+            delete_post_meta( $post_id, $key );
+            continue;
+        }
+
+        $value = wp_unslash( $_POST[ $key ] );
+        if ( is_array( $value ) ) {
+            continue;
+        }
+
+        switch ( $type ) {
+            case 'url':
+                $value = esc_url_raw( $value );
+                break;
+            case 'int':
+                $value = absint( $value );
+                break;
+            case 'textarea':
+                $value = sanitize_textarea_field( $value );
+                break;
+            case 'checkbox':
+                $value = ( '1' === (string) $value ) ? '1' : '0';
+                break;
+            default:
+                $value = sanitize_text_field( $value );
+                break;
+        }
+
+        update_post_meta( $post_id, $key, $value );
+    }
 }
 add_action( 'save_post', 'comodoc_meta_save' );
 
 // Adds the meta box stylesheet when appropriate 
 function comodocs_admin_styles(){
     global $typenow;
+
     if($typenow == 'document') {
         wp_enqueue_style('comodoc_meta_box_styles', plugin_dir_url( __FILE__ ) .'css/admin.min.css');
     }
@@ -427,15 +486,26 @@ class ComoDocs_Shortcode {
 					$doc['file-2'] = get_post_meta($doc['id'],'comodoc-file-2',true);
 					$doc['file-id-2'] = get_post_meta($doc['id'],'comodoc-file-id-2',true);
 					$doc['link'] = get_post_meta($doc['id'],'comodoc-link',true);
+                    $doc['embed-pdf'] = get_post_meta($doc['id'], 'comodoc-embed-pdf', true);
+					$doc['content'] = get_the_content();
 					$doc['category'] = $document_cat; 
 					$comodoc_array[] = $doc;
 				}
+				
+				
+				echo '<p><strong>$comodoc_template: '. $comodoc_template .'</strong></p>'; 
+				
 				if ($comodoc_template) {
 					$temp = (is_child_theme() ? get_stylesheet_directory() : get_template_directory() ) . '/como-docs/'. $comodoc_template .'.php';
 					if (file_exists($temp)) {
 						include($temp);
 					} else {
-						include(plugin_dir_path( __FILE__ ) .'templates/default.php');
+						$temp = (is_child_theme() ? get_stylesheet_directory() : get_template_directory() ) . '/como-docs/'. $comodoc_template .'.php';
+						if (file_exists($temp)) {
+							include(plugin_dir_path( __FILE__ ) .'templates/'. $comodoc_template .'.php');	
+						} else {
+							include(plugin_dir_path( __FILE__ ) .'templates/default.php');
+						}
 					}
 				} else {
 					include(plugin_dir_path( __FILE__ ) .'templates/default.php');
@@ -457,6 +527,7 @@ class ComoDocs_Shortcode {
 	}*/
 }
 ComoDocs_Shortcode::init();
+
 define('PLUGIN_URL', plugin_dir_url(__FILE__));
 // Usage: [comodocs-filtered page=1 nav-template=TEMPLATE list-template=TEMPLATE pagination-template=TEMPLATE tax=DOCUMENT_CATEGORY text-loading=LOADING TEXT text-results=RESULT TEXT scroll-top=true/false scroll-offset=OFFSET scroll-delay=DELAY text- orderby=DATE/TITLE/MENU_ORDER order=ASC/DESC]
 class ComoDocsFilteredPaged_Shortcode {
@@ -489,8 +560,8 @@ class ComoDocsFilteredPaged_Shortcode {
 			), $atts );
 			
 			$result = NULL;
-			$terms  = get_terms($a['tax']);
-			if (count($terms)) {
+			$terms  = get_terms( array( 'taxonomy' => $a['tax'], 'hide_empty' => true ) );
+			if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
 				ob_start(); 
 				$nav_template = (isset($atts['nav-template']) ? $atts['nav-template'] : 'default-nav');
 				if ($nav_template) {
@@ -523,88 +594,95 @@ class ComoDocsFilteredPaged_Shortcode {
 	}
 }
 ComoDocsFilteredPaged_Shortcode::init();
+
 // AJAX filter posts by taxonomy term
 function vb_filter_posts() {
-    if( !isset( $_POST['nonce'] ) || !wp_verify_nonce( $_POST['nonce'], 'comoDocs' ) )
-        die('Permission denied');
-    // Default response
-    $response = [
-        'status'  => 500,
-        'message' => 'Something is wrong, please try again later ...',
-        'content' => false,
-        'found'   => 0
-    ];
-    $tax  = sanitize_text_field($_POST['params']['tax']);
-    $term = sanitize_text_field($_POST['params']['term']);
-    $page = intval($_POST['params']['page']);
-    $qty  = intval($_POST['params']['qty']);
-	$orderby = sanitize_text_field($_POST['params']['orderby']);
-	$order = sanitize_text_field($_POST['params']['order']);
-	$list_template = sanitize_text_field($_POST['params']['list-template']);
-	$pagination_template = sanitize_text_field($_POST['params']['pagination-template']);
-    // Check if term exists
-    if (!term_exists( $term, $tax) && $term != 'all-terms') {
-        $response = [
-            'status'  => 501,
-            'message' => 'Term doesn\'t exist',
-            'content' => 0
-        ];
-        die(json_encode($response));
-	}
-	if ($term != 'all-terms') { 
-        $tax_qry[] = [
+    $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+    if ( ! wp_verify_nonce( $nonce, 'comoDocs' ) ) {
+        wp_send_json( array( 'status' => 403, 'message' => 'Permission denied', 'content' => false, 'found' => 0 ), 403 );
+    }
+
+    $params = isset( $_POST['params'] ) && is_array( $_POST['params'] ) ? wp_unslash( $_POST['params'] ) : array();
+    $tax = isset( $params['tax'] ) ? sanitize_key( $params['tax'] ) : 'document-cat';
+    $term = isset( $params['term'] ) ? sanitize_title( $params['term'] ) : 'all-terms';
+    $page = isset( $params['page'] ) ? max( 1, absint( $params['page'] ) ) : 1;
+    $qty = isset( $params['qty'] ) ? absint( $params['qty'] ) : 10;
+    $qty = min( 100, max( 1, $qty ) );
+    $orderby = isset( $params['orderby'] ) ? sanitize_key( $params['orderby'] ) : 'date';
+    $allowed_orderby = array( 'date', 'title', 'menu_order', 'modified', 'ID', 'name', 'rand' );
+    if ( ! in_array( $orderby, $allowed_orderby, true ) ) {
+        $orderby = 'date';
+    }
+    $order = isset( $params['order'] ) ? strtoupper( sanitize_text_field( $params['order'] ) ) : 'DESC';
+    $order = in_array( $order, array( 'ASC', 'DESC' ), true ) ? $order : 'DESC';
+
+    // Only use the plugin's document taxonomy for this document filter.
+    if ( 'document-cat' !== $tax || ! taxonomy_exists( $tax ) ) {
+        wp_send_json( array( 'status' => 400, 'message' => 'Invalid taxonomy.', 'content' => false, 'found' => 0 ), 400 );
+    }
+
+    if ( 'all-terms' !== $term && ! term_exists( $term, $tax ) ) {
+        wp_send_json( array( 'status' => 400, 'message' => 'Term does not exist.', 'content' => false, 'found' => 0 ), 400 );
+    }
+
+    $tax_qry = array();
+    if ( 'all-terms' !== $term ) {
+        $tax_qry[] = array(
             'taxonomy' => $tax,
             'field'    => 'slug',
             'terms'    => $term,
-        ];
-	}
-    // Setup query
-    $args = [
-        'paged'         => $page,
-        'post_type'     => 'document',
-        'post_status'   => 'publish',
-        'posts_per_page'=> $qty,
-        'tax_query'     => $tax_qry,
-		'orderby'		=> $orderby,
-		'order'			=> $order
-    ];
-    $qry = new WP_Query($args);
-	
-	ob_start();
-	if ($qry->have_posts()) {
-		while ($qry->have_posts()) {
-			$qry->the_post(); 
-			$doc = get_post_meta(get_the_id());
-			$list_template = (($list_template) ? $list_template : 'default-list');
-			if ($list_template) {
-				$temp = (is_child_theme() ? get_stylesheet_directory() : get_template_directory() ) . '/como-docs/'. $list_template .'.php';
-				if (file_exists($temp)) {
-					include($temp);
-				} else {
-					include(plugin_dir_path( __FILE__ ) .'templates/default-list.php');
-				}
-			} else {
-				include(plugin_dir_path( __FILE__ ) .'templates/default-list.php');
-			}
-		}
-		
-		// Pagination
-		vb_ajax_pager($qry,$page,$pagination_template);
-		$response = [
-			'status'=> 200,
-			'found' => $qry->found_posts
-		];
-	} else {
-		$response = [
-			'status'  => 201,
-			'message' => 'No posts found'
-		];
-	}
-	$response['content'] = ob_get_clean();
-	die(json_encode($response));
+        );
+    }
+
+    // Restrict template names to simple filenames and verify the file exists.
+    $list_template = isset( $params['list-template'] ) ? sanitize_file_name( $params['list-template'] ) : 'default-list';
+    $pagination_template = isset( $params['pagination-template'] ) ? sanitize_file_name( $params['pagination-template'] ) : 'default-pagination';
+    $theme_dir = trailingslashit( get_stylesheet_directory() ) . 'como-docs/';
+    $plugin_dir = trailingslashit( plugin_dir_path( __FILE__ ) ) . 'templates/';
+    $list_path = $theme_dir . $list_template . '.php';
+    if ( ! preg_match( '/^[a-zA-Z0-9_-]+$/', $list_template ) || ! is_file( $list_path ) ) {
+        $list_path = $plugin_dir . 'default-list.php';
+    }
+    $pagination_path = $theme_dir . $pagination_template . '.php';
+    if ( ! preg_match( '/^[a-zA-Z0-9_-]+$/', $pagination_template ) || ! is_file( $pagination_path ) ) {
+        $pagination_template = 'default-pagination';
+    }
+
+    $args = array(
+        'paged'          => $page,
+        'post_type'      => 'document',
+        'post_status'    => 'publish',
+        'posts_per_page' => $qty,
+        'orderby'        => $orderby,
+        'order'          => $order,
+    );
+    if ( ! empty( $tax_qry ) ) {
+        $args['tax_query'] = $tax_qry;
+    }
+
+    $qry = new WP_Query( $args );
+    ob_start();
+
+    if ( $qry->have_posts() ) {
+        while ( $qry->have_posts() ) {
+            $qry->the_post();
+            $doc = get_post_meta( get_the_ID() );
+            include $list_path;
+        }
+        vb_ajax_pager( $qry, $page, $pagination_template );
+        $found = (int) $qry->found_posts;
+        wp_reset_postdata();
+        $content = ob_get_clean();
+        wp_send_json( array( 'status' => 200, 'found' => $found, 'content' => $content ) );
+    }
+
+    wp_reset_postdata();
+    $content = ob_get_clean();
+    wp_send_json( array( 'status' => 201, 'message' => 'No posts found', 'found' => 0, 'content' => $content ) );
 }
 add_action('wp_ajax_do_filter_posts', 'vb_filter_posts');
 add_action('wp_ajax_nopriv_do_filter_posts', 'vb_filter_posts'); 
+
 // Pagination
 function vb_ajax_pager( $query = null, $paged = 1, $pgTemplate = 'default-pagination' ) {
     if (!$query)
@@ -634,6 +712,7 @@ function vb_ajax_pager( $query = null, $paged = 1, $pgTemplate = 'default-pagina
 		?>
     <?php endif;
 }
+
 /********* TinyMCE Button Add-On ***********/
 add_action( 'after_setup_theme', 'comodoc_button_setup' );
 if (!function_exists('comodoc_button_setup')) {
@@ -665,50 +744,88 @@ if ( ! function_exists( 'comodoc_register_buttons' ) ) {
         return $buttons;
     }
 }
-add_action ( 'after_wp_tiny_mce', 'comodoc_tinymce_extra_vars' );
-if ( !function_exists( 'comodoc_tinymce_extra_vars' ) ) {
-	function comodoc_tinymce_extra_vars() { 
-		// Get Templates
-		$docTemplates[] = array('value'=>'default','text'=>'Default');
-		$templateDir = (is_child_theme() ? get_stylesheet_directory() : get_template_directory() ) . '/como-docs/';
-		if (file_exists($templateDir) == true) {
-			if ($handle = opendir($templateDir)) {
-				while (false !== ($entry = readdir($handle))) {
-					if ($entry != "." && $entry != "..") {
-						$docTemplates[] = array('value'=>basename($entry, '.php'),'text'=>basename($entry, '.php'));
-					}
-				}
-				closedir($handle);
-			}
-		}
-		$docTemplates = json_encode($docTemplates);
+// Output TinyMCE configuration after the editor scripts are available.
+add_action( 'after_wp_tiny_mce', 'comodoc_tinymce_extra_vars' );
+if ( ! function_exists( 'comodoc_tinymce_extra_vars' ) ) {
+    function comodoc_tinymce_extra_vars() {
+        if ( ! current_user_can( 'edit_posts' ) && ! current_user_can( 'edit_pages' ) ) {
+            return;
+        }
+
+        $docTemplates = array(
+            array( 'value' => 'default', 'text' => 'Default' ),
+        );
 		
-		$terms = get_terms( array(
-			'taxonomy' => 'document-cat',
-			'hide_empty' => true
-		) );
+		// Get Main PLugin Templates
+        $templateDir = WP_PLUGIN_DIR . '/como-docs/templates/';
+        if ( is_dir( $templateDir ) && is_readable( $templateDir ) ) {
+            $files = glob( $templateDir . '*.php' );
+            if ( is_array( $files ) ) {
+                foreach ( $files as $file ) {
+                    $name = basename( $file, '.php' );
+                    if ( 'default' === $name || ! preg_match( '/^[a-zA-Z0-9_-]+$/', $name ) ) {
+                        continue;
+                    }
+                    $docTemplates[] = array( 'value' => $name, 'text' => $name );
+                }
+            }
+        }
 		
-		$taxArr = array();	
-		if (count($terms) > 0) {
-			foreach ($terms as $term) {
-				$taxArr[] = array('value'=>$term->slug,'text'=>$term->name);
-			}
-			$taxArr = json_encode($taxArr);
-		} else {
-			$taxArr = array(); 
-		}
-		
-		?>
-		<script type="text/javascript">
-			var tinyMCE_document = <?php echo json_encode(
-				array(
-					'button_name' => esc_html__('Embed Doc(s)', 'comodoc'),
-					'button_title' => esc_html__('Embed Doc(s)', 'comodoc'),
-					'document_template_select_options' => $docTemplates,
-					'doc_category_options' => $taxArr
-				)
-			);
-			?>;
-		</script><?php
-	} 	
+		// Get Child Theme Templates 
+		$templateDir = trailingslashit( get_stylesheet_directory() ) . 'como-docs/';
+        if ( is_dir( $templateDir ) && is_readable( $templateDir ) ) {
+            $files = glob( $templateDir . '*.php' );
+            if ( is_array( $files ) ) {
+                foreach ( $files as $file ) {
+                    $name = basename( $file, '.php' );
+                    if ( 'default' === $name || ! preg_match( '/^[a-zA-Z0-9_-]+$/', $name ) ) {
+                        continue;
+                    }
+                    $docTemplates[] = array( 'value' => $name, 'text' => $name );
+                }
+            }
+        }
+
+        $taxArr = array();
+        $terms = get_terms( array( 'taxonomy' => 'document-cat', 'hide_empty' => true ) );
+        if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+            foreach ( $terms as $term ) {
+                $taxArr[] = array( 'value' => $term->slug, 'text' => $term->name );
+            }
+        }
+
+        // Keep the legacy JS contract: these two properties are JSON strings.
+        $config = array(
+            'button_name' => esc_html__( 'Embed Doc(s)', 'comodoc' ),
+            'button_title' => esc_html__( 'Embed Doc(s)', 'comodoc' ),
+            'document_template_select_options' => wp_json_encode( $docTemplates ),
+            'doc_category_options' => wp_json_encode( $taxArr ),
+        );
+        ?>
+        <script type="text/javascript">
+            window.tinyMCE_document = <?php echo wp_json_encode( $config ); ?>;
+        </script>
+        <?php
+    }
 }
+
+/**
+ * Place Document Settings under the Documents admin menu.
+ * The options page callback is defined by includes/comodoc-options.php.
+ */
+function comodoc_move_settings_under_documents() {
+    if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'comodoc_render_settings_page' ) ) {
+        return;
+    }
+
+    remove_submenu_page( 'options-general.php', 'comodoc_plugin_settings' );
+    add_submenu_page(
+        'edit.php?post_type=document',
+        __( 'Document Settings', 'como-docs' ),
+        __( 'Document Settings', 'como-docs' ),
+        'manage_options',
+        'comodoc_plugin_settings',
+        'comodoc_render_settings_page'
+    );
+}
+add_action( 'admin_menu', 'comodoc_move_settings_under_documents', 99 );

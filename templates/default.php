@@ -5,6 +5,8 @@ defined('ABSPATH') || exit;
 // Expected fields include: id, author, title, publication, event,
 // volume, number, page-start, page-end, pub-date, date, doi, file, link.
 
+echo '<p><strong>$comodoc_template: '. $comodoc_template .'</strong></p>';
+
 $comodocDisplay = '<div class="row justify-content-center">';
 $comodocDisplay .= '<div class="col-12 col-xs-12 col-sm-12 col-md-12 col-lg-10">';
 $comodocDisplay .= '<ul class="publication-list">';
