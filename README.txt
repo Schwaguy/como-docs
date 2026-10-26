@@ -30,3 +30,5 @@ Plugin to enable document management
 1.1.7 - Fixed PHP error caused by missing "options" varible for text field setting
 1.1.8 - Added aria-selected attributes to sortable list navitgation items
 1.1.9 - Step 1 of Repository move
+2.0.0 - AI coding Improvements
+2.0.1 - Added ability to embed PDfs
